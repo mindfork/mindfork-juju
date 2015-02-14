@@ -1,0 +1,22 @@
+#!/bin/bash
+set -e
+
+juju-log "Setting port: $(config-get port)"
+
+port=$(config-get port)
+[[ -d /etc/mindfork ]] || mkdir -p /etc/mindfork
+cat <<EOF > /etc/mindfork/mindfork.toml
+port = ${port}
+EOF
+
+if [[ -f /var/run/mindforkd.pid ]]; then
+  juju-log "Stopping Mindfork daemon"
+  start-stop-daemon --stop --pid /var/run/mindforkd.pid
+
+  juju-log "Starting Mindfork daemon"
+  start-stop-daemon \
+	  --start \
+	  --background \
+	  --make-pidfile --pidfile /var/run/mindforkd.pid \
+	  --exec $(which mindforkd)
+fi

@@ -1,0 +1,25 @@
+#!/bin/bash
+set -e 
+
+juju-log "Rewriting config file"
+
+conf_location=/etc/mindfork/mindfork.toml
+[[ -d /etc/mindfork ]] || mkdir -p /etc/mindfork
+MF_PORT=$(config-get port)
+cat <<EOF > $conf_location
+port = ${MF_PORT}
+EOF
+
+# service mindfork restart
+if [[ -f /var/run/mindforkd ]]; then
+  juju-log "Stopping Mindfork daemon"
+  start-stop-daemon --stop --pid /var/run/mindforkd.pid
+fi
+
+juju-log "Starting Mindfork daemon"
+start-stop-daemon \
+	--start \
+	--background \
+	--make-pidfile --pidfile /var/run/mindforkd.pid \
+	--exec $(which mindforkd) # -- $PROGRAM-ARGUMENT
+

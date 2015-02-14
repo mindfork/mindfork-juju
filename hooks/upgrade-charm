@@ -1,0 +1,46 @@
+#!/bin/bash
+set -e 
+
+export GOPATH=/root/go/
+if [[ :$PATH: != "/usr/local/go/bin" ]]; then
+  export PATH=$PATH:/usr/local/go/bin
+fi
+
+export GOPATH=/root/go/
+if [[ :$PATH: != "${GOPATH}/bin" ]]; then
+  export PATH=${GOPATH}/bin:$PATH
+fi
+
+juju-log "Getting latest Mindfork upstream"
+
+go get -u -v github.com/mindfork/mindfork/...
+pushd ${GOPATH}/src/github.com/mindfork/mindfork
+go clean -i ./...
+go get -u -v launchpad.net/godeps/...
+godeps -u dependencies.tsv
+go install ./...
+popd
+
+ln -sf ${GOPATH}/bin/mindforkd /usr/local/bin/mindforkd
+
+juju-log "Restarting Mindfork service"
+
+if [[ -f /var/run/mindforkd ]]; then
+  start-stop-daemon --stop --pid /var/run/mindforkd
+
+  start-stop-daemon \
+	  --start \
+	  --background \
+	  --make-pidfile --pidfile /var/run/mindforkd.pid \
+	  --exec mindforkd # -- $PROGRAM-ARGUMENT
+fi
+
+# service mindfork restart
+
+# juju-log "Writing service file"
+# [[ -d /usr/lib/systemd/system ]] || mkdir -p /usr/lib/systemd/system
+# cp files/mindfork.service /usr/lib/systemd/system/mindfork.service
+# systemctl daemon-reload
+
+# juju-log "Enabling service"
+# systemctl enable mindfork.service

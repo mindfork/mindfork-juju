@@ -1,0 +1,23 @@
+name: mindfork
+summary: A distributed service for intelligently managing communities.
+description: |
+  A distributed service for intelligently managing communities.
+  http://mindfork.io
+maintainer:
+  name: Bodie Solomon
+  email: bodie@synapsegarden.net
+tags: [analytics]
+provides:
+  backend-http:
+    interface: mindfork
+#  peer:
+#    interface: mindfork
+#  master:
+#    interface: mindfork-master
+#requires:
+#  database:
+#    interface: cassandra
+#    optional: true
+#  login-db:
+#    interface: redis
+#    optional: true
