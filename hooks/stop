@@ -1,0 +1,10 @@
+#!/bin/bash
+set -e
+juju-log "Stopping mindfork daemon..."
+# service mindforkd stop
+
+if [[ -e /var/run/mindforkd.pid ]]; then
+  start-stop-daemon --stop --pid /var/run/mindforkd.pid
+  rm /var/run/mindforkd.pid
+fi
+

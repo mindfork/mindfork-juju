@@ -1,0 +1,15 @@
+[Unit]
+Description="Mindfork is a service daemon for intelligently managing communities."
+After=syslog.target
+Documentation="http://doc.mindfork.io"
+Alias="mindforkd"
+
+[Service]
+Type=dbus
+BusName=org.mindfork.mindforkd
+ExecStart=/usr/local/bin/mindforkd
+Restart=no
+ExecStop=killall mindforkd
+
+[Install]
+WantedBy=multi-user.target

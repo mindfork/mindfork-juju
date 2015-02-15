@@ -1,0 +1,5 @@
+options:
+  port:
+    default: 25000
+    description: The port to listen on.
+    type: int
