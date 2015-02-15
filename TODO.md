@@ -1,3 +1,2 @@
- - Reload config
- - User
-
+ - Switch to systemd when it's supported
+ - User privileges (jail?)

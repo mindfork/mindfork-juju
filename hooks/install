@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-# EXPERIMENTAL AND BAD!
 apt-get update
 apt-get install -y tmux git wget bzr
 
@@ -15,21 +14,15 @@ LOCATION="https://storage.googleapis.com/golang/${GOTAR}"
 juju-log "Downloading ${GOTAR} from ${LOCATION}"
 
 wget "$LOCATION" -O "/tmp/${GOTAR}"
-if [ -d /usr/local/go ]; then
-  rm -rf /usr/local/go
-fi
+[[ -d /usr/local/go ]] && rm -rf /usr/local/go
 
 juju-log "Extracting ${GOTAR}"
 
 tar -C /usr/local -xvzf "/tmp/${GOTAR}"
-if [[ :$PATH: != "/usr/local/go/bin" ]]; then
-  export PATH=$PATH:/usr/local/go/bin
-fi
+[[ ":$PATH:" == *":/usr/local/go/bin:"* ]] || export PATH=$PATH:/usr/local/go/bin
 
-export GOPATH=/root/go/
-if [[ :$PATH: != "${GOPATH}/bin" ]]; then
-  export PATH=${GOPATH}/bin:$PATH
-fi
+export GOPATH=/root/go
+[[ ":$PATH:" == *":${GOPATH}/bin:"* ]] || export PATH=${GOPATH}/bin:$PATH
 
 juju-log "Getting Mindfork dependencies and building"
 

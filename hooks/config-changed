@@ -1,22 +1,68 @@
 #!/bin/bash
 set -e
 
-juju-log "Setting port: $(config-get port)"
+export GOPATH=/root/go
+[[ ":$PATH:" == *":/usr/local/go/bin:"* ]] || export PATH=$PATH:/usr/local/go/bin
+[[ ":$PATH:" == *":${GOPATH}/bin:"* ]] || export PATH=$GOPATH/bin:$PATH
+
+mfpath=${GOPATH}/src/github.com/mindfork/mindfork
+mfrepo=github.com/mindfork/mindfork
 
 port=$(config-get port)
-[[ -d /etc/mindfork ]] || mkdir -p /etc/mindfork
-cat <<EOF > /etc/mindfork/mindfork.toml
+version=$(config-get version)
+remote=$(config-get remote)
+
+build()
+{
+  go clean -i ./...
+  go get -u -v launchpad.net/godeps/...
+  godeps -u dependencies.tsv
+  go install ./...
+  [[ -f /usr/local/bin/mindforkd ]] && rm /usr/local/bin/mindforkd
+  ln -sf ${GOPATH}/bin/mindforkd /usr/local/bin/mindforkd 
+}
+
+stopstart()
+{
+  if [[ -f /var/run/mindforkd.pid ]]; then
+    juju-log "Stopping Mindfork daemon"
+    start-stop-daemon --stop --pid /var/run/mindforkd.pid
+    juju-log "Starting Mindfork daemon"
+    start-stop-daemon --start --background --make-pidfile --pidfile /var/run/mindforkd.pid --exec /usr/local/bin/mindforkd
+  fi
+}
+
+cleanpath()
+{
+  [[ -d ${mfpath} ]] && rm -rf ${mfpath}
+  go get -u -v -d ${mfrepo}
+}
+
+writeconf()
+{
+  juju-log "Writing conf file"
+  [[ -d /etc/mindfork ]] || mkdir -p /etc/mindfork
+  cat <<EOF > /etc/mindfork/mindfork.toml
 port = ${port}
 EOF
+}
 
-if [[ -f /var/run/mindforkd.pid ]]; then
-  juju-log "Stopping Mindfork daemon"
-  start-stop-daemon --stop --pid /var/run/mindforkd.pid
+writeconf
 
-  juju-log "Starting Mindfork daemon"
-  start-stop-daemon \
-	  --start \
-	  --background \
-	  --make-pidfile --pidfile /var/run/mindforkd.pid \
-	  --exec $(which mindforkd)
+cleanpath
+pushd ${mfpath}
+
+git remote add upstream ${remote}
+git fetch --all
+
+if [[ $version != "tip" ]]; then
+  git checkout ${version}
+else
+  git checkout upstream/master
 fi
+
+build
+
+stopstart
+
+exit 0

@@ -1,7 +1,0 @@
-upgrade:
-  description: Upgrade to a specific git ref, or 'tip'
-  params:
-    version:
-      type: string
-      description: The ref to upgrade to
-
