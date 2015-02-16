@@ -1,38 +1,40 @@
 #!/bin/bash
+
 set -e 
 
-export GOPATH=/root/go/
-if [[ :$PATH: != "/usr/local/go/bin" ]]; then
-  export PATH=$PATH:/usr/local/go/bin
-fi
+export GOPATH=/root/go
 
-export GOPATH=/root/go/
-if [[ :$PATH: != "${GOPATH}/bin" ]]; then
-  export PATH=${GOPATH}/bin:$PATH
-fi
+mfpath=${GOPATH}/src/github.com/mindfork/mindfork
+[[ ":$PATH:" == *":/usr/local/go/bin:"* ]] || export PATH=$PATH:/usr/local/go/bin
+[[ ":$PATH:" == *":${GOPATH}/bin:"* ]] || export PATH=${GOPATH}/bin:$PATH
 
 juju-log "Getting latest Mindfork upstream"
 
-go get -u -v github.com/mindfork/mindfork/...
+[[ -d ${GOPATH} ]] && rm -rf ${mfpath}
+go get -u -v -d github.com/mindfork/mindfork/...
 pushd ${GOPATH}/src/github.com/mindfork/mindfork
+git remote add upstream $(config-get remote)
+git checkout $(config-get version)
 go clean -i ./...
 go get -u -v launchpad.net/godeps/...
 godeps -u dependencies.tsv
 go install ./...
 popd
 
+[[ -f /usr/local/bin/mindforkd ]] && rm /usr/local/bin/mindforkd
 ln -sf ${GOPATH}/bin/mindforkd /usr/local/bin/mindforkd
 
 juju-log "Restarting Mindfork service"
 
 if [[ -f /var/run/mindforkd ]]; then
+  juju-log "Stopping Mindfork daemon"
   start-stop-daemon --stop --pid /var/run/mindforkd
-
+  juju-log "Starting Mindfork daemon"
   start-stop-daemon \
 	  --start \
 	  --background \
 	  --make-pidfile --pidfile /var/run/mindforkd.pid \
-	  --exec mindforkd # -- $PROGRAM-ARGUMENT
+	  --exec /usr/local/bin/mindforkd # -- $PROGRAM-ARGUMENT
 fi
 
 # service mindfork restart

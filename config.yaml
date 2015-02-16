@@ -3,3 +3,9 @@ options:
     default: 25000
     description: The port to listen on.
     type: int
+  version:
+    default: tip
+    description: The ref to use, or "tip".
+  remote:
+    default: https://github.com/mindfork/mindfork.git
+    description: The remote to use.
